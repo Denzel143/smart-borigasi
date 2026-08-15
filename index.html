@@ -299,6 +299,28 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Gaya Khusus untuk UI Baterai */
+  .battery-wrapper {
+    display: flex; align-items: center; gap: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  .battery-body {
+    width: 48px; height: 22px; 
+    border: 2px solid var(--cream); 
+    border-radius: 4px; padding: 2px; 
+    display: flex; gap: 2px;
+  }
+  .battery-bar {
+    flex: 1; background: var(--leaf-bright); 
+    border-radius: 1px; opacity: 0.15; 
+    transition: opacity 0.3s ease;
+  }
+  .battery-bar.active { opacity: 1; }
+  .battery-tip {
+    width: 4px; height: 10px; 
+    background: var(--cream); border-radius: 0 3px 3px 0;
+  }
+
   footer {
     text-align: center; font-size: 13px; color: rgba(248,249,250,0.3);
     margin-top: 40px; line-height: 1.8;
@@ -367,11 +389,11 @@
           </defs>
           <path class="ring-bg" d="M 16.12 160 A 143.88 143.88 0 0 1 303.88 160" stroke-width="20" fill="none" stroke-linecap="round"/>
           <path d="M 16.12 160 A 143.88 143.88 0 0 1 303.88 160" stroke-width="20" fill="none" stroke-linecap="round" stroke="url(#speedoGrad)"/>
+          
           <g id="needleGroup" filter="url(#shadow)">
-            <path d="M 160 156 L 35 158 L 35 162 L 160 164 Z" fill="#ffffff" />
-            <circle cx="160" cy="160" r="10" fill="#ffffff" />
-            <circle cx="160" cy="160" r="4" fill="#1c2620" />
+            <rect x="6" y="157" width="20" height="6" rx="3" fill="#ffffff" />
           </g>
+
         </svg>
         
         <div class="moisture-value">
@@ -421,7 +443,17 @@
       <div class="section-title" data-i18n="powerTitle">System Power (LiFePO4)</div>
       <div class="setting-row" style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 16px;">
-          <div style="font-size: 36px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">🔋</div>
+          <!-- UI Baterai yang baru di sini -->
+          <div class="battery-wrapper">
+            <div class="battery-body">
+              <div class="battery-bar" id="bbar1"></div>
+              <div class="battery-bar" id="bbar2"></div>
+              <div class="battery-bar" id="bbar3"></div>
+              <div class="battery-bar" id="bbar4"></div>
+              <div class="battery-bar" id="bbar5"></div>
+            </div>
+            <div class="battery-tip"></div>
+          </div>
           <div>
             <div style="font-size: 13px; color: rgba(248,249,250,0.5); text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px;" data-i18n="battLabel">Battery Capacity</div>
             <div style="font-size: 28px; font-weight: 800; color: var(--leaf-bright);" id="battNum">--%</div>
@@ -738,7 +770,23 @@ function parseTelemetry(line) {
   updateSystemValuesUI(thVal, hyVal);
   
   if (battVal !== null && !isNaN(battVal)) {
-    battNum.textContent = battVal + '%';
+    updateBatteryUI(battVal);
+  }
+}
+
+function updateBatteryUI(percent) {
+  battNum.textContent = percent + '%';
+  const activeCount = Math.ceil(percent / 20); // 5 balok mewakili per 20%
+  
+  for (let i = 1; i <= 5; i++) {
+    const bar = document.getElementById('bbar' + i);
+    if (bar) {
+      if (i <= activeCount) {
+        bar.classList.add('active');
+      } else {
+        bar.classList.remove('active');
+      }
+    }
   }
 }
 
