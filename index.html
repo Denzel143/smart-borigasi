@@ -1172,12 +1172,13 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
 
   const langMap = { en: "English", id: "Indonesian", zh: "Simplified Chinese" };
   const systemPrompt = `You are an expert in agriculture and botany. Provide factual and accurate information about the inputted plant.
-You MUST output strictly in JSON format with the following keys, containing strings translated to ${langMap[currentLang]}:
+You MUST output strictly in JSON format with the following keys, containing strings translated to ${langMap[currentLang]}. 
+Follow these exact formatting rules for the values:
 - "description": A comprehensive and detailed overview of the plant, its characteristics, natural habitat, and general care requirements. Make this section descriptive and informative (at least 2-3 paragraphs).
-- "temperature": The ideal temperature range (keep it concise).
-- "soil_moisture": The ideal soil moisture percentage (keep it concise).
-- "air_humidity": The ideal air humidity percentage (keep it concise).
-- "sunlight": The ideal sunlight exposure (keep it concise).
+- "temperature": The ideal temperature range formatted exactly as "X°C-Y°C" (e.g., "20°C-25°C").
+- "soil_moisture": The ideal soil moisture percentage range formatted exactly as "X%-Y%" (e.g., "40%-60%").
+- "air_humidity": The ideal air humidity percentage range formatted exactly as "X%-Y%" (e.g., "50%-70%").
+- "sunlight": The ideal sunlight exposure formatted exactly like "[Type of] sunlight for [X]-[Y] hour(s)" (e.g., "Direct sunlight for 6-8 hours").
 Do not wrap the JSON in markdown or add any other conversational text. Just the raw JSON object.`;
 
   try {
