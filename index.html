@@ -30,6 +30,15 @@
     user-select: none;
   }
 
+  /* Izinkan select khusus untuk AI response */
+  .ai-output, .ai-input {
+    -webkit-user-select: auto !important;
+    -khtml-user-select: auto !important;
+    -moz-user-select: auto !important;
+    -ms-user-select: auto !important;
+    user-select: auto !important;
+  }
+
   *:focus {
     outline: none !important;
   }
@@ -299,6 +308,46 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Gaya Khusus AI Card */
+  .ai-input-row { 
+    display: flex; gap: 12px; margin-bottom: 20px; 
+  }
+  .ai-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--cream);
+    padding: 16px 20px;
+    border-radius: 16px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .ai-input:focus { border-color: var(--leaf-bright); }
+  .ai-btn {
+    background: linear-gradient(135deg, var(--leaf-bright), var(--leaf));
+    color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    padding: 0 28px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s;
+    box-shadow: 0 4px 15px rgba(102,187,106,0.25);
+  }
+  .ai-btn:active:not(:disabled) { transform: scale(0.95); }
+  .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .ai-output {
+    background: rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--cream);
+    min-height: 50px;
+    white-space: pre-wrap;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
   /* Gaya Khusus untuk UI Baterai */
   .battery-wrapper {
     display: flex; align-items: center; gap: 4px;
@@ -336,6 +385,8 @@
     .card { padding: 24px; border-radius: 20px; }
     .moisture-ring { width: 240px; height: 140px; }
     .moisture-value .num { font-size: 48px; }
+    .ai-input-row { flex-direction: column; }
+    .ai-btn { padding: 16px; }
   }
 </style>
 </head>
@@ -438,6 +489,16 @@
       </div>
     </div>
 
+    <!-- ===================== CARD 3.5: PAKAR AI ===================== -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="section-title" data-i18n="aiTitle">Plant Expert AI</div>
+      <div class="ai-input-row">
+        <input type="text" id="plantInput" class="ai-input" data-i18n="aiPlaceholder" placeholder="Enter plant name...">
+        <button id="btnAskAI" class="ai-btn" data-i18n="aiBtn">Send</button>
+      </div>
+      <div id="aiResponse" class="ai-output" data-i18n="aiEmpty">Plant parameters and ideal conditions will appear here...</div>
+    </div>
+
     <!-- ===================== CARD 4: STATUS BATERAI ===================== -->
     <div class="card" style="grid-column: 1 / -1;">
       <div class="section-title" data-i18n="powerTitle">System Power (LiFePO4)</div>
@@ -515,7 +576,12 @@ const translations = {
     footerText: "System values come directly from Arduino telemetry data, not just slider positions on screen.",
     bleUnsupported: "This browser does not support Web Bluetooth API. Use Chrome/Edge on Android or Desktop.",
     bleFail: "Failed to connect: ",
-    bleConfirmFail: "Failed to apply %s after several attempts. Check Bluetooth connection / module position."
+    bleConfirmFail: "Failed to apply %s after several attempts. Check Bluetooth connection / module position.",
+    aiTitle: "Plant Expert AI",
+    aiPlaceholder: "Enter plant name...",
+    aiBtn: "Send",
+    aiLoading: "Asking AI...",
+    aiEmpty: "Plant parameters and ideal conditions will appear here..."
   },
   id: {
     eyebrow: "SISTEM IRIGASI OTOMATIS",
@@ -554,7 +620,12 @@ const translations = {
     footerText: 'Nilai "Sistem" bersumber langsung dari data telemetry Arduino, bukan sekadar posisi slider di layar.',
     bleUnsupported: "Browser ini tidak mendukung Web Bluetooth API. Gunakan Chrome/Edge di Android atau Desktop.",
     bleFail: "Gagal terhubung: ",
-    bleConfirmFail: "Gagal menerapkan %s setelah beberapa percobaan. Periksa koneksi Bluetooth / posisi modul."
+    bleConfirmFail: "Gagal menerapkan %s setelah beberapa percobaan. Periksa koneksi Bluetooth / posisi modul.",
+    aiTitle: "Pakar Tanaman AI",
+    aiPlaceholder: "Masukkan nama tanaman...",
+    aiBtn: "Kirim",
+    aiLoading: "Meminta informasi AI...",
+    aiEmpty: "Parameter tanaman dan kondisi ideal akan muncul di sini..."
   },
   zh: {
     eyebrow: "自动灌溉系统",
@@ -593,7 +664,12 @@ const translations = {
     footerText: "“系统”数值直接来自 Arduino 遥测数据，而不仅仅是屏幕上的滑块位置。",
     bleUnsupported: "此浏览器不支持 Web 蓝牙 API。请在 Android 或桌面设备上使用 Chrome/Edge。",
     bleFail: "连接失败: ",
-    bleConfirmFail: "多次尝试后仍无法应用 %s。请检查蓝牙连接/模块位置。"
+    bleConfirmFail: "多次尝试后仍无法应用 %s。请检查蓝牙连接/模块位置。",
+    aiTitle: "AI 植物专家",
+    aiPlaceholder: "输入植物名称...",
+    aiBtn: "发送",
+    aiLoading: "正在询问 AI...",
+    aiEmpty: "植物参数和理想条件将显示在这里..."
   }
 };
 
@@ -673,7 +749,7 @@ const gradStop2 = document.getElementById('gradStop2');
 const gradStop3 = document.getElementById('gradStop3');
 
 const langSelect = document.getElementById('langSelect');
-const btnCopyLog = document.getElementById('btnCopyLog'); // Tombol Log
+const btnCopyLog = document.getElementById('btnCopyLog'); 
 
 function updateSpeedometerGradient(threshold, hysteresis) {
   let blueStart = Math.max(0, threshold - hysteresis);
@@ -1010,6 +1086,66 @@ async function sendCommand(type, value) {
     console.error('✗ writeValue GAGAL:', err.message);
   }
 }
+
+// ==================== FUNGSI PAKAR TANAMAN AI (GROQ) ====================
+document.getElementById('btnAskAI').addEventListener('click', async () => {
+  const plantName = document.getElementById('plantInput').value.trim();
+  if (!plantName) return;
+
+  const btn = document.getElementById('btnAskAI');
+  const output = document.getElementById('aiResponse');
+  
+  btn.disabled = true;
+  output.textContent = translations[currentLang].aiLoading;
+
+  let apiKey = null; // Inisialisasi awal variabel RAM
+  
+  try {
+    // 1. Ambil API Key dari file api.txt
+    const response = await fetch('api.txt');
+    if (!response.ok) throw new Error("File api.txt tidak ditemukan.");
+    apiKey = (await response.text()).trim();
+  } catch (err) {
+    output.textContent = "Error: " + err.message;
+    btn.disabled = false;
+    return;
+  }
+
+  // 2. Siapkan model, bahasa, dan instruksi prompt
+  const langMap = { en: "English", id: "Indonesian", zh: "Simplified Chinese" };
+  const systemPrompt = `You are an expert in agriculture. Provide brief, factual information about the inputted plant. You MUST include ideal temperature, ideal soil moisture (%), ideal air humidity (%), and ideal sunlight. Do not use formatting like markdown bold/italics excessively. Respond ENTIRELY in ${langMap[currentLang]}.`;
+
+  try {
+    // 3. Panggil Groq API
+    const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192", // Menggunakan model terbaik dari LLaMA3 di Groq
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: plantName }
+        ],
+        temperature: 0.5,
+        max_tokens: 400
+      })
+    });
+
+    if (!aiRes.ok) throw new Error("Gagal mengambil data dari API.");
+    
+    const data = await aiRes.json();
+    output.textContent = data.choices[0].message.content.trim();
+  } catch (err) {
+    output.textContent = "Error: " + err.message;
+  } finally {
+    // 4. Melepaskan Key dari RAM secara eksplisit
+    apiKey = null; 
+    btn.disabled = false;
+  }
+});
 
 // ==================== FUNGSI SALIN LOG ====================
 btnCopyLog.addEventListener('click', () => {
