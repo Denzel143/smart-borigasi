@@ -500,7 +500,7 @@
 
       <div class="pump-badge" id="pumpBadge">
         <span class="pdot"></span>
-        <span id="pumpText">PUMP: --</span>
+        <span id="pumpText">VALVE: --</span>
       </div>
 
       <button id="btnOverride" class="override-btn" disabled data-i18n="btnOverride">💧 Hold to Water (Override)</button>
@@ -517,7 +517,7 @@
         </div>
         <input type="range" id="sliderThreshold" min="10" max="90" value="40">
         <div class="slider-labels"><span>10%</span><span id="thresholdLive">40%</span><span>90%</span></div>
-        <div class="slider-hint" data-i18n="thresholdHint">Pump will turn on when soil is drier than this value.</div>
+        <div class="slider-hint" data-i18n="thresholdHint">Valve will open when soil is drier than this value.</div>
       </div>
 
       <div class="setting-row">
@@ -597,14 +597,14 @@ const translations = {
     btnDisconnect: "Disconnect",
     moistureTitle: "Real-time Monitoring",
     moistureUnit: "% MOISTURE",
-    pumpPrefix: "PUMP: ",
-    pumpOff: "OFF",
-    pumpOn: "ON",
+    pumpPrefix: "VALVE: ",
+    pumpOff: "OPEN",
+    pumpOn: "CLOSE",
     btnOverride: "💧 Hold to Water (Override)",
     settingsTitle: "System Settings",
     thresholdTitle: "Threshold (Dry Limit)",
     sysLabel: "System: ",
-    thresholdHint: "Pump will turn on when soil is drier than this value.",
+    thresholdHint: "Valve will open when soil is drier than this value.",
     hysteresisTitle: "Hysteresis (Anti-Flicker)",
     hysteresisHint: "Tolerance range around threshold (0–10%). Sent directly to Arduino on press.",
     minusAria: "Decrease hysteresis",
@@ -646,9 +646,9 @@ const translations = {
     btnDisconnect: "Disconnect",
     moistureTitle: "Monitoring Real-time",
     moistureUnit: "% KELEMBABAN",
-    pumpPrefix: "POMPA: ",
-    pumpOff: "OFF",
-    pumpOn: "ON",
+    pumpPrefix: "VALVE: ",
+    pumpOff: "TUTUP",
+    pumpOn: "BUKA",
     btnOverride: "💧 Tahan untuk Siram (Override)",
     settingsTitle: "Pengaturan Sistem",
     thresholdTitle: "Threshold (Batas Kering)",
@@ -695,9 +695,9 @@ const translations = {
     btnDisconnect: "断开连接",
     moistureTitle: "实时监控",
     moistureUnit: "% 土壤湿度",
-    pumpPrefix: "水泵: ",
-    pumpOff: "关",
-    pumpOn: "开",
+    pumpPrefix: "阀门: ",
+    pumpOff: "关闭",
+    pumpOn: "打开",
     btnOverride: "💧 按住浇水 (手动控制)",
     settingsTitle: "系统设置",
     thresholdTitle: "阈值 (干燥极限)",
