@@ -642,45 +642,15 @@ async function connectBluetooth() {
     }
 
     setConnectingUI();
-    let deviceFound = false;
 
-    // 1. Cek perangkat yang pernah diizinkan sebelumnya (Auto-connect)
-    if (navigator.bluetooth.getDevices) {
-      const devices = await navigator.bluetooth.getDevices();
-      if (devices.length > 0) {
-        const connectPromises = devices.map(async (device) => {
-          const server = await device.gatt.connect();
-          return { device, server };
-        });
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [SERVICE_UUID] }],
+      optionalServices: [SERVICE_UUID]
+    });
 
-        try {
-          // Timeout 2.5 detik agar user gesture (~5 detik) untuk requestDevice tidak hangus
-          const result = await Promise.race([
-            Promise.any(connectPromises),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
-          ]);
-          
-          bleDevice = result.device;
-          bleServer = result.server;
-          bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-          deviceFound = true;
-          console.log("Auto-connect berhasil ke:", bleDevice.name);
-        } catch (err) {
-          console.log("Auto-connect tidak menemukan perangkat aktif.");
-        }
-      }
-    }
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-    // 2. Jika tidak ada auto-connect yang berhasil, panggil pop-up manual
-    if (!deviceFound) {
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-        optionalServices: [SERVICE_UUID]
-      });
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-      bleServer = await bleDevice.gatt.connect();
-    }
-
+    bleServer = await bleDevice.gatt.connect();
     const service = await bleServer.getPrimaryService(SERVICE_UUID);
     bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
