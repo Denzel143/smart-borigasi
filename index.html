@@ -347,6 +347,33 @@
     white-space: pre-wrap;
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
+  
+  /* Styling tambahan untuk hasil JSON parsing */
+  .ai-result-grid {
+    display: grid;
+    gap: 12px;
+  }
+  .ai-result-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 16px;
+    border-radius: 12px;
+    border-left: 4px solid var(--leaf-bright);
+  }
+  .ai-result-item.desc {
+    border-left-color: #29b6f6;
+  }
+  .ai-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(248,249,250,0.6);
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .ai-value {
+    font-size: 15px;
+    color: var(--cream);
+  }
 
   /* Gaya Khusus untuk UI Baterai */
   .battery-wrapper {
@@ -581,7 +608,12 @@ const translations = {
     aiPlaceholder: "Enter plant name...",
     aiBtn: "Send",
     aiLoading: "Asking AI...",
-    aiEmpty: "Plant parameters and ideal conditions will appear here..."
+    aiEmpty: "Plant parameters and ideal conditions will appear here...",
+    aiDescLabel: "Brief Info",
+    aiTempLabel: "Ideal Temperature",
+    aiSoilLabel: "Ideal Soil Moisture",
+    aiAirLabel: "Ideal Air Humidity",
+    aiSunLabel: "Ideal Sunlight"
   },
   id: {
     eyebrow: "SISTEM IRIGASI OTOMATIS",
@@ -625,7 +657,12 @@ const translations = {
     aiPlaceholder: "Masukkan nama tanaman...",
     aiBtn: "Kirim",
     aiLoading: "Meminta informasi AI...",
-    aiEmpty: "Parameter tanaman dan kondisi ideal akan muncul di sini..."
+    aiEmpty: "Parameter tanaman dan kondisi ideal akan muncul di sini...",
+    aiDescLabel: "Sekilas",
+    aiTempLabel: "Suhu Ideal",
+    aiSoilLabel: "Kelembaban Tanah Ideal",
+    aiAirLabel: "Kelembaban Udara Ideal",
+    aiSunLabel: "Cahaya Matahari Ideal"
   },
   zh: {
     eyebrow: "自动灌溉系统",
@@ -669,7 +706,12 @@ const translations = {
     aiPlaceholder: "输入植物名称...",
     aiBtn: "发送",
     aiLoading: "正在询问 AI...",
-    aiEmpty: "植物参数和理想条件将显示在这里..."
+    aiEmpty: "植物参数和理想条件将显示在这里...",
+    aiDescLabel: "简介",
+    aiTempLabel: "理想温度",
+    aiSoilLabel: "理想土壤湿度",
+    aiAirLabel: "理想空气湿度",
+    aiSunLabel: "理想日照"
   }
 };
 
@@ -1096,27 +1138,31 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
   const output = document.getElementById('aiResponse');
   
   btn.disabled = true;
-  output.textContent = translations[currentLang].aiLoading;
+  output.innerHTML = translations[currentLang].aiLoading;
 
-  let apiKey = null; // Inisialisasi awal variabel RAM
+  let apiKey = null; 
   
   try {
-    // 1. Ambil API Key dari file api.txt
     const response = await fetch('api.txt');
     if (!response.ok) throw new Error("File api.txt tidak ditemukan.");
     apiKey = (await response.text()).trim();
   } catch (err) {
-    output.textContent = "Error: " + err.message;
+    output.innerHTML = "Error: " + err.message;
     btn.disabled = false;
     return;
   }
 
-  // 2. Siapkan model, bahasa, dan instruksi prompt
   const langMap = { en: "English", id: "Indonesian", zh: "Simplified Chinese" };
-  const systemPrompt = `You are an expert in agriculture. Provide brief, factual information about the inputted plant. You MUST include ideal temperature, ideal soil moisture (%), ideal air humidity (%), and ideal sunlight. Do not use formatting like markdown bold/italics excessively. Respond ENTIRELY in ${langMap[currentLang]}.`;
+  const systemPrompt = `You are an expert in agriculture. Provide brief, factual information about the inputted plant.
+You MUST output strictly in JSON format with the following keys, containing strings translated to ${langMap[currentLang]}:
+- "description": A brief overview of the plant.
+- "temperature": The ideal temperature range.
+- "soil_moisture": The ideal soil moisture percentage.
+- "air_humidity": The ideal air humidity percentage.
+- "sunlight": The ideal sunlight exposure.
+Do not wrap the JSON in markdown or add any other conversational text. Just the raw JSON object.`;
 
   try {
-    // 3. Panggil Groq API
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -1124,24 +1170,55 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", // Menggunakan model terbaik dari LLaMA3 di Groq
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: plantName }
         ],
-        temperature: 0.5,
-        max_tokens: 400
+        temperature: 0.1, // Dibuat rendah agar JSON stabil dan deterministik
+        max_tokens: 400,
+        response_format: { type: "json_object" } // Paksa model hanya mengeluarkan JSON object
       })
     });
 
-    if (!aiRes.ok) throw new Error("Gagal mengambil data dari API.");
-    
     const data = await aiRes.json();
-    output.textContent = data.choices[0].message.content.trim();
+    
+    if (!aiRes.ok) {
+      throw new Error(data.error?.message || `API Error: ${aiRes.status}`);
+    }
+    
+    const parsedData = JSON.parse(data.choices[0].message.content.trim());
+    const t = translations[currentLang];
+
+    // Menampilkan hasil parsing JSON ke dalam UI HTML yang rapi
+    output.innerHTML = `
+      <div class="ai-result-grid">
+        <div class="ai-result-item desc">
+          <div class="ai-label">${t.aiDescLabel}</div>
+          <div class="ai-value">${parsedData.description}</div>
+        </div>
+        <div class="ai-result-item">
+          <div class="ai-label">${t.aiTempLabel}</div>
+          <div class="ai-value">${parsedData.temperature}</div>
+        </div>
+        <div class="ai-result-item">
+          <div class="ai-label">${t.aiSoilLabel}</div>
+          <div class="ai-value">${parsedData.soil_moisture}</div>
+        </div>
+        <div class="ai-result-item">
+          <div class="ai-label">${t.aiAirLabel}</div>
+          <div class="ai-value">${parsedData.air_humidity}</div>
+        </div>
+        <div class="ai-result-item">
+          <div class="ai-label">${t.aiSunLabel}</div>
+          <div class="ai-value">${parsedData.sunlight}</div>
+        </div>
+      </div>
+    `;
+
   } catch (err) {
-    output.textContent = "Error: " + err.message;
+    output.innerHTML = "Error: " + err.message;
   } finally {
-    // 4. Melepaskan Key dari RAM secara eksplisit
     apiKey = null; 
     btn.disabled = false;
   }
@@ -1151,7 +1228,6 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
 btnCopyLog.addEventListener('click', () => {
   const now = new Date();
   
-  // Format Tanggal dan Waktu Lengkap
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
   let locale = currentLang === 'id' ? 'id-ID' : currentLang === 'zh' ? 'zh-CN' : 'en-US';
   const timeStr = now.toLocaleString(locale, dateOptions);
@@ -1161,10 +1237,8 @@ btnCopyLog.addEventListener('click', () => {
   const batt = battNum.textContent;
   const t = translations[currentLang];
 
-  // Menyusun teks log (enter baris baru tiap info)
   const logText = `${t.logDate}${timeStr}\n${t.logMoisture}${moist}%\n${t.logThreshold}${th}%\n${t.logBattery}${batt}`;
 
-  // Menyalin ke clipboard
   navigator.clipboard.writeText(logText).then(() => {
     const originalText = btnCopyLog.textContent;
     btnCopyLog.textContent = "✅ " + t.logCopied;
