@@ -31,12 +31,15 @@
   }
 
   /* Izinkan select khusus untuk AI response */
-  .ai-output, .ai-input {
-    -webkit-user-select: auto !important;
-    -khtml-user-select: auto !important;
-    -moz-user-select: auto !important;
-    -ms-user-select: auto !important;
-    user-select: auto !important;
+  .ai-output {
+    background: rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--cream);
+    min-height: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   *:focus {
@@ -1153,13 +1156,13 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
   }
 
   const langMap = { en: "English", id: "Indonesian", zh: "Simplified Chinese" };
-  const systemPrompt = `You are an expert in agriculture. Provide brief, factual information about the inputted plant.
+  const systemPrompt = `You are an expert in agriculture and botany. Provide factual and accurate information about the inputted plant.
 You MUST output strictly in JSON format with the following keys, containing strings translated to ${langMap[currentLang]}:
-- "description": A brief overview of the plant.
-- "temperature": The ideal temperature range.
-- "soil_moisture": The ideal soil moisture percentage.
-- "air_humidity": The ideal air humidity percentage.
-- "sunlight": The ideal sunlight exposure.
+- "description": A comprehensive and detailed overview of the plant, its characteristics, natural habitat, and general care requirements. Make this section descriptive and informative (at least 2-3 paragraphs).
+- "temperature": The ideal temperature range (keep it concise).
+- "soil_moisture": The ideal soil moisture percentage (keep it concise).
+- "air_humidity": The ideal air humidity percentage (keep it concise).
+- "sunlight": The ideal sunlight exposure (keep it concise).
 Do not wrap the JSON in markdown or add any other conversational text. Just the raw JSON object.`;
 
   try {
@@ -1175,9 +1178,9 @@ Do not wrap the JSON in markdown or add any other conversational text. Just the 
           { role: "system", content: systemPrompt },
           { role: "user", content: plantName }
         ],
-        temperature: 0.1, // Dibuat rendah agar JSON stabil dan deterministik
-        max_tokens: 400,
-        response_format: { type: "json_object" } // Paksa model hanya mengeluarkan JSON object
+        temperature: 0.1,
+        max_tokens: 1024, // Naikkan agar deskripsi panjang tidak terpotong
+        response_format: { type: "json_object" }
       })
     });
 
