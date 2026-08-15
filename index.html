@@ -353,29 +353,44 @@
   
   /* Styling tambahan untuk hasil JSON parsing */
   .ai-result-grid {
-    display: grid;
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
   .ai-result-item {
     background: rgba(255, 255, 255, 0.03);
-    padding: 12px 16px;
+    padding: 16px 20px;
     border-radius: 12px;
     border-left: 4px solid var(--leaf-bright);
   }
   .ai-result-item.desc {
     border-left-color: #29b6f6;
   }
+  .ai-result-item.desc .ai-value {
+    white-space: pre-wrap; /* Mengembalikan Enter/baris baru khusus untuk deskripsi */
+  }
   .ai-label {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: rgba(248,249,250,0.6);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-weight: 700;
   }
   .ai-value {
     font-size: 15px;
     color: var(--cream);
+  }
+  
+  /* Desain khusus untuk list parameter dalam 1 box */
+  .params-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .param-item {
+    display: flex;
+    flex-direction: column;
   }
 
   /* Gaya Khusus untuk UI Baterai */
@@ -1194,27 +1209,35 @@ Do not wrap the JSON in markdown or add any other conversational text. Just the 
     const t = translations[currentLang];
 
     // Menampilkan hasil parsing JSON ke dalam UI HTML yang rapi
+    // Menampilkan hasil parsing JSON ke dalam UI HTML yang rapi & ringkas
     output.innerHTML = `
       <div class="ai-result-grid">
+        <!-- Kotak 1: Deskripsi (Sekilas) -->
         <div class="ai-result-item desc">
           <div class="ai-label">${t.aiDescLabel}</div>
           <div class="ai-value">${parsedData.description}</div>
         </div>
+        
+        <!-- Kotak 2: Gabungan 4 Parameter Ideal -->
         <div class="ai-result-item">
-          <div class="ai-label">${t.aiTempLabel}</div>
-          <div class="ai-value">${parsedData.temperature}</div>
-        </div>
-        <div class="ai-result-item">
-          <div class="ai-label">${t.aiSoilLabel}</div>
-          <div class="ai-value">${parsedData.soil_moisture}</div>
-        </div>
-        <div class="ai-result-item">
-          <div class="ai-label">${t.aiAirLabel}</div>
-          <div class="ai-value">${parsedData.air_humidity}</div>
-        </div>
-        <div class="ai-result-item">
-          <div class="ai-label">${t.aiSunLabel}</div>
-          <div class="ai-value">${parsedData.sunlight}</div>
+          <div class="params-container">
+            <div class="param-item">
+              <div class="ai-label">${t.aiTempLabel}</div>
+              <div class="ai-value">${parsedData.temperature}</div>
+            </div>
+            <div class="param-item">
+              <div class="ai-label">${t.aiSoilLabel}</div>
+              <div class="ai-value">${parsedData.soil_moisture}</div>
+            </div>
+            <div class="param-item">
+              <div class="ai-label">${t.aiAirLabel}</div>
+              <div class="ai-value">${parsedData.air_humidity}</div>
+            </div>
+            <div class="param-item">
+              <div class="ai-label">${t.aiSunLabel}</div>
+              <div class="ai-value">${parsedData.sunlight}</div>
+            </div>
+          </div>
         </div>
       </div>
     `;
