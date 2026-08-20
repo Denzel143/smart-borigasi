@@ -1147,7 +1147,7 @@ async function sendCommand(type, value) {
   }
 }
 
-// ==================== FUNGSI PAKAR TANAMAN AI (GROQ) ====================
+// ==================== FUNGSI PAKAR TANAMAN AI (VERCEL SERVERLESS) ====================
 document.getElementById('btnAskAI').addEventListener('click', async () => {
   const plantName = document.getElementById('plantInput').value.trim();
   if (!plantName) return;
@@ -1158,18 +1158,7 @@ document.getElementById('btnAskAI').addEventListener('click', async () => {
   btn.disabled = true;
   output.innerHTML = translations[currentLang].aiLoading;
 
-  let apiKey = null; 
-  
-  try {
-    const response = await fetch('api.txt');
-    if (!response.ok) throw new Error("File api.txt tidak ditemukan.");
-    apiKey = (await response.text()).trim();
-  } catch (err) {
-    output.innerHTML = "Error: " + err.message;
-    btn.disabled = false;
-    return;
-  }
-
+  // Mendefinisikan bahasa untuk instruksi AI
   const langMap = { en: "English", id: "Indonesian", zh: "Simplified Chinese" };
   const systemPrompt = `You are an expert in agriculture and botany. Provide factual and accurate information about the inputted plant.
 You MUST output strictly in JSON format with the following keys, containing strings translated to ${langMap[currentLang]}. 
@@ -1182,44 +1171,36 @@ Follow these exact formatting rules for the values:
 Do not wrap the JSON in markdown or add any other conversational text. Just the raw JSON object.`;
 
   try {
-    const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Memanggil API internal Vercel (/api/ask) sebagai ganti akses API Groq langsung
+    const aiRes = await fetch('/api/ask', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: plantName }
-        ],
-        temperature: 0.1,
-        max_tokens: 1024, // Naikkan agar deskripsi panjang tidak terpotong
-        response_format: { type: "json_object" }
+        plantName: plantName,
+        langPrompt: systemPrompt
       })
     });
 
     const data = await aiRes.json();
     
+    // Tangani jika terjadi error dari serverless function
     if (!aiRes.ok) {
-      throw new Error(data.error?.message || `API Error: ${aiRes.status}`);
+      throw new Error(data.error || `Server Error: ${aiRes.status}`);
     }
     
-    const parsedData = JSON.parse(data.choices[0].message.content.trim());
+    // Parsing hasil jawaban AI (asumsi struktur Groq API tetap konsisten dari backend)
+    const parsedData = JSON.parse(data.result.trim());
     const t = translations[currentLang];
 
-    // Menampilkan hasil parsing JSON ke dalam UI HTML yang rapi
-    // Menampilkan hasil parsing JSON ke dalam UI HTML yang rapi & ringkas
+    // Menampilkan hasil parsing JSON ke dalam UI HTML
     output.innerHTML = `
       <div class="ai-result-grid">
-        <!-- Kotak 1: Deskripsi (Sekilas) -->
         <div class="ai-result-item desc">
           <div class="ai-label">${t.aiDescLabel}</div>
           <div class="ai-value">${parsedData.description}</div>
         </div>
-        
-        <!-- Kotak 2: Gabungan 4 Parameter Ideal -->
         <div class="ai-result-item">
           <div class="params-container">
             <div class="param-item">
@@ -1246,7 +1227,6 @@ Do not wrap the JSON in markdown or add any other conversational text. Just the 
   } catch (err) {
     output.innerHTML = "Error: " + err.message;
   } finally {
-    apiKey = null; 
     btn.disabled = false;
   }
 });
