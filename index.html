@@ -88,10 +88,6 @@
 
   /* Custom Select untuk Pilihan Bahasa */
   .lang-select {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: var(--cream);
@@ -106,6 +102,94 @@
   .lang-select option {
     background: var(--soil-dark);
     color: var(--cream);
+  }
+
+  /* ==================== SELF-REBOOT ==================== */
+  .header-right-controls {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .self-reboot-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rebooting-label {
+    display: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sand);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  .self-reboot-btn {
+    background: rgba(239, 83, 80, 0.12);
+    border: 1px solid rgba(239, 83, 80, 0.35);
+    color: var(--danger);
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 12px;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .self-reboot-btn:active:not(:disabled) {
+    background: rgba(239, 83, 80, 0.25);
+  }
+
+  .reboot-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .reboot-card {
+    width: 100%;
+    max-width: 320px;
+    background: var(--soil);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 32px;
+    text-align: center;
+  }
+  .reboot-card-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--cream);
+    margin-bottom: 24px;
+  }
+  .reboot-card-actions {
+    display: flex;
+    gap: 14px;
+  }
+  .reboot-card-actions button {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 14px;
+  }
+  .reboot-cancel-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--cream);
+  }
+  .reboot-confirm-btn {
+    background: linear-gradient(135deg, #ef5350, #c62828);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(239, 83, 80, 0.25);
   }
 
   header h1 {
@@ -426,27 +510,45 @@
     .grid-container { grid-template-columns: 1fr; gap: 20px; }
     header h1 { font-size: 32px; }
     .header-top { flex-direction: column; gap: 10px; }
-    .lang-select { position: static; transform: none; }
+    .header-right-controls { position: static; transform: none; }
     .card { padding: 24px; border-radius: 20px; }
     .moisture-ring { width: 240px; height: 140px; }
     .moisture-value .num { font-size: 48px; }
     .ai-input-row { flex-direction: column; }
     .ai-btn { padding: 16px; }
+    .self-reboot-btn { padding: 8px 12px; font-size: 11px; }
+    .rebooting-label { font-size: 10px; }
   }
 </style>
 </head>
 <body>
+
+<div id="rebootOverlay" class="reboot-overlay">
+  <div class="reboot-card">
+    <div class="reboot-card-title" data-i18n="rebootConfirmTitle">Reboot?</div>
+    <div class="reboot-card-actions">
+      <button id="btnRebootCancel" class="reboot-cancel-btn" data-i18n="btnCancel">Cancel</button>
+      <button id="btnRebootConfirm" class="reboot-confirm-btn" data-i18n="btnReboot">Reboot</button>
+    </div>
+  </div>
+</div>
 
 <div class="dashboard">
 
   <header>
     <div class="header-top">
       <div class="eyebrow" data-i18n="eyebrow">AUTOMATIC IRRIGATION SYSTEM</div>
-      <select id="langSelect" class="lang-select">
-        <option value="en">English (EN)</option>
-        <option value="id">Bahasa Indonesia (ID)</option>
-        <option value="zh">简体中文 (ZH)</option>
-      </select>
+      <div class="header-right-controls">
+        <select id="langSelect" class="lang-select">
+          <option value="en">English (EN)</option>
+          <option value="id">Bahasa Indonesia (ID)</option>
+          <option value="zh">简体中文 (ZH)</option>
+        </select>
+        <div class="self-reboot-wrap">
+          <span id="rebootingLabel" class="rebooting-label" data-i18n="rebootingText">Rebooting...</span>
+          <button id="btnSelfReboot" class="self-reboot-btn" data-i18n="btnSelfReboot">🔁 Self-Reboot</button>
+        </div>
+      </div>
     </div>
     <h1 data-i18n="title">Smart Farming</h1>
     <p data-i18n="subtitle">Soil moisture control via Bluetooth Low Energy</p>
@@ -631,7 +733,13 @@ const translations = {
     aiTempLabel: "Ideal Temperature",
     aiSoilLabel: "Ideal Soil Moisture",
     aiAirLabel: "Ideal Air Humidity",
-    aiSunLabel: "Ideal Sunlight"
+    aiSunLabel: "Ideal Sunlight",
+    btnSelfReboot: "🔁 Self-Reboot",
+    rebootingText: "Rebooting...",
+    rebootConfirmTitle: "Reboot?",
+    btnReboot: "Reboot",
+    btnCancel: "Cancel",
+    rebootFail: "No confirmation received from the device. Please check the Bluetooth connection and try again."
   },
   id: {
     eyebrow: "SISTEM IRIGASI OTOMATIS",
@@ -680,7 +788,13 @@ const translations = {
     aiTempLabel: "Suhu Ideal",
     aiSoilLabel: "Kelembaban Tanah Ideal",
     aiAirLabel: "Kelembaban Udara Ideal",
-    aiSunLabel: "Cahaya Matahari Ideal"
+    aiSunLabel: "Cahaya Matahari Ideal",
+    btnSelfReboot: "🔁 Reboot Mandiri",
+    rebootingText: "Sedang Reboot...",
+    rebootConfirmTitle: "Reboot?",
+    btnReboot: "Reboot",
+    btnCancel: "Batal",
+    rebootFail: "Tidak ada konfirmasi dari perangkat. Periksa koneksi Bluetooth lalu coba lagi."
   },
   zh: {
     eyebrow: "自动灌溉系统",
@@ -729,7 +843,13 @@ const translations = {
     aiTempLabel: "理想温度",
     aiSoilLabel: "理想土壤湿度",
     aiAirLabel: "理想空气湿度",
-    aiSunLabel: "理想日照"
+    aiSunLabel: "理想日照",
+    btnSelfReboot: "🔁 自我重启",
+    rebootingText: "重启中...",
+    rebootConfirmTitle: "重启？",
+    btnReboot: "重启",
+    btnCancel: "取消",
+    rebootFail: "未收到设备确认信号。请检查蓝牙连接后重试。"
   }
 };
 
@@ -811,6 +931,111 @@ const gradStop3 = document.getElementById('gradStop3');
 const langSelect = document.getElementById('langSelect');
 const btnCopyLog = document.getElementById('btnCopyLog'); 
 
+// ==================== FUNGSI SELF-REBOOT ====================
+const btnSelfReboot    = document.getElementById('btnSelfReboot');
+const rebootOverlay    = document.getElementById('rebootOverlay');
+const btnRebootCancel  = document.getElementById('btnRebootCancel');
+const btnRebootConfirm = document.getElementById('btnRebootConfirm');
+const rebootingLabel   = document.getElementById('rebootingLabel');
+
+const REBOOT_ACK_LINE   = 'RBACK'; // Sinyal dari Arduino: perintah reboot sudah diterima
+const REBOOT_DONE_LINE  = 'RBOOT'; // Sinyal dari Arduino: reboot selesai (dikirim tiap kali setup() berjalan)
+const REBOOT_TIMEOUT_MS = 15000;   // Batas waktu tunggu sinyal "reboot berhasil" sebelum dianggap gagal
+
+// Semua kontrol yang harus dinonaktifkan selama proses reboot berlangsung
+const rebootDisableIds = [
+  'btnConnect', 'btnOverride', 'sliderThreshold',
+  'btnHysteresisMinus', 'btnHysteresisPlus',
+  'btnAskAI', 'plantInput', 'btnCopyLog', 'langSelect', 'btnSelfReboot'
+];
+
+let isRebooting = false;
+let rebootTimeoutTimer = null;
+
+btnSelfReboot.addEventListener('click', () => {
+  if (isRebooting) return;
+  rebootOverlay.style.display = 'flex';
+});
+
+btnRebootCancel.addEventListener('click', () => {
+  rebootOverlay.style.display = 'none';
+});
+
+btnRebootConfirm.addEventListener('click', () => {
+  rebootOverlay.style.display = 'none';
+  startReboot();
+});
+
+function startReboot() {
+  if (!bleCharacteristic) {
+    alert(translations[currentLang].disconnected);
+    return;
+  }
+
+  isRebooting = true;
+  setRebootUIActive(true);
+  sendRebootCommand();
+
+  // Jaga-jaga: jika sinyal "reboot berhasil" tak pernah datang, jangan biarkan UI terkunci selamanya
+  rebootTimeoutTimer = setTimeout(() => {
+    if (!isRebooting) return;
+    isRebooting = false;
+    setRebootUIActive(false);
+    alert(translations[currentLang].rebootFail);
+  }, REBOOT_TIMEOUT_MS);
+}
+
+function setRebootUIActive(active) {
+  rebootingLabel.style.display = active ? 'inline' : 'none';
+
+  if (active) {
+    rebootDisableIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+  } else {
+    // Kembalikan status btnConnect & btnOverride sesuai kondisi koneksi terkini
+    if (bleDevice && bleDevice.gatt.connected) {
+      setConnectedUI(bleDevice.name || 'Perangkat BLE');
+    } else {
+      setDisconnectedUI();
+    }
+    // Kontrol lain (tidak tergantung status koneksi) dikembalikan seperti semula
+    ['sliderThreshold', 'btnHysteresisMinus', 'btnHysteresisPlus', 'btnAskAI', 'plantInput', 'btnCopyLog', 'langSelect', 'btnSelfReboot'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+  }
+}
+
+async function sendRebootCommand() {
+  const data = new TextEncoder().encode('<R1>');
+  try {
+    if (bleCharacteristic.properties.writeWithoutResponse) {
+      await bleCharacteristic.writeValueWithoutResponse(data);
+    } else if (bleCharacteristic.properties.write) {
+      await bleCharacteristic.writeValue(data);
+    }
+  } catch (err) {
+    console.error('Gagal mengirim perintah reboot:', err);
+  }
+}
+
+function handleRebootAck() {
+  // Perintah reboot sudah dikonfirmasi diterima Arduino.
+  // UI "Rebooting..." sudah ditampilkan sejak tombol Reboot dipencet, jadi di sini cukup menunggu RBOOT.
+}
+
+function handleRebootDone() {
+  if (rebootTimeoutTimer) {
+    clearTimeout(rebootTimeoutTimer);
+    rebootTimeoutTimer = null;
+  }
+  if (!isRebooting) return; // Sinyal RBOOT saat startup normal (bukan hasil reboot manual), abaikan
+  isRebooting = false;
+  setRebootUIActive(false);
+}
+
 function updateSpeedometerGradient(threshold, hysteresis) {
   let blueStart = Math.max(0, threshold - hysteresis);
   let blueEnd = Math.min(100, threshold + hysteresis);
@@ -861,7 +1086,16 @@ async function connectBluetooth() {
 }
 
 function onDisconnected() {
-  setDisconnectedUI();
+  if (isRebooting) {
+    if (rebootTimeoutTimer) {
+      clearTimeout(rebootTimeoutTimer);
+      rebootTimeoutTimer = null;
+    }
+    isRebooting = false;
+    setRebootUIActive(false); // otomatis memanggil setDisconnectedUI() karena koneksi sudah putus
+  } else {
+    setDisconnectedUI();
+  }
 }
 
 function setConnectingUI() {
@@ -909,7 +1143,13 @@ function onDataReceived(event) {
     const line = rxBuffer.substring(0, newlineIndex).trim();
     rxBuffer = rxBuffer.substring(newlineIndex + 1);
     if (line.length > 0) {
-      parseTelemetry(line);
+      if (line === REBOOT_ACK_LINE) {
+        handleRebootAck();
+      } else if (line === REBOOT_DONE_LINE) {
+        handleRebootDone();
+      } else {
+        parseTelemetry(line);
+      }
     }
   }
 }
